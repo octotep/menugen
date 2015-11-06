@@ -24,13 +24,22 @@ back=true
 # $3 - Action to perform on follow
 function add_item() {
 	local hash=$(echo "$1" | md5sum | cut -d' ' -f 1)
-	# TODO: check parameters provided
+	# Check parameters
+	if [[ "$#" -ne 3 ]]; then
+		echo "ERROR: add_item requires 3 arguments (got $#)"
+		echo "    - The name of the ITEM (value: \"$1\")"
+		echo "    - The link location to the next menu (value: \"$2\")"
+		echo "    - The action the ITEM will exec (value: \"$3\")"
+		exit -1
+	fi
+	# Name CANNOT be blank
 	if [[ "$1" == "" ]]; then
 		echo "ERROR: ITEM name must not be blank!"
 		exit -1
 	fi
-	if [[ "$#" -lt 2 ]]; then
-		echo "ERROR: add_item requires at least two parameters"
+	# One of link or action MUST NOT be blank
+	if [[ "$1" == "" && "$2" == "" ]]; then
+		echo "ERROR: The ITEM must have either a link or an action"
 		exit -1
 	fi
 	ITEMID+=("$hash")
@@ -40,9 +49,59 @@ function add_item() {
 	ITEMACTION["$hash"]="$3"
 }
 
-# Function which adds BACK to the menu
-# TODO: $1 - Custom back text
-# TODO: $2 - Custom back link
+# Function which adds links to the menu
+# $1 - link name
+# $2 - Link location
+function add_link() {
+	local hash=$(echo "$1" | md5sum | cut -d' ' -f 1)
+	# Check parameters
+	if [[ "$#" -ne 2 ]]; then
+		echo "ERROR: add_item requires 2 arguments (got $#)"
+		echo "    - The name of the ITEM (value: \"$1\")"
+		echo "    - The link location to the next menu (value: \"$2\")"
+		exit -1
+	fi
+	# Name and the link CANNOT be blank
+	if [[ "$1" == "" || "$2" == "" ]]; then
+		echo "ERROR: Neither the name nor the link can be blank!"
+		echo "    - Provided name: \"$1\""
+		echo "    - Provided link: \"$2\""
+		exit -1
+	fi
+	ITEMID+=("$hash")
+	ITEMNAME["$hash"]="$1"
+	ITEMTYPE["$hash"]="item"
+	ITEMLINK["$hash"]="$2"
+	ITEMACTION["$hash"]=""
+}
+
+# Function which adds actions to the menu
+# $1 - link name
+# $2 - Action to exec
+function add_exec() {
+	local hash=$(echo "$1" | md5sum | cut -d' ' -f 1)
+	# Check parameters
+	if [[ "$#" -ne 2 ]]; then
+		echo "ERROR: add_item requires 2 arguments (got $#)"
+		echo "    - The name of the ITEM (value: \"$1\")"
+		echo "    - The action to exec (value: \"$2\")"
+		exit -1
+	fi
+	# Neither the name or the action can be blank
+	if [[ "$1" == "" || "$2" == "" ]]; then
+		echo "ERROR: Neither the name nor the link can be blank!"
+		echo "    - Provided name: \"$1\""
+		echo "    - Provided action: \"$2\""
+		exit -1
+	fi
+	ITEMID+=("$hash")
+	ITEMNAME["$hash"]="$1"
+	ITEMTYPE["$hash"]="item"
+	ITEMLINK["$hash"]=""
+	ITEMACTION["$hash"]="$2"
+}
+
+# Function which adds BACK to the menu using menumaker's internal data structures
 function add_back() {
 	local item_text=""
 	# No args provided, auto generate back item
@@ -58,7 +117,6 @@ function add_back() {
 	ITEMNAME["$hash"]="$item_text"
 	ITEMTYPE["$hash"]="back"
 	ITEMLINK["$hash"]="${prevmenu[-1]}"
-	# ITEMACTION["$hash"]="exit"
 }
 
 # Function which adds NOPs to the menu
@@ -75,17 +133,8 @@ function add_nop() {
 	ITEMTYPE["$hash"]="nop"
 }
 
-# Test the $1 script is provided
-if [[ "$#" -ne 1 ]]; then
-		echo "ERROR: menumaker requires a menumaker script as it's parameter"
-		exit -1
-fi
-if [ ! -e $scriptname ]; then
-		echo "ERROR: The script $scriptname does not exist"
-		exit -1
-fi
-
 # Fucntion to test if the menu $1 is defined in the menu script
+# Returns 0 if it exists, and -1 if it doesn't if isn't valid
 # TODO: test if begin comes before end, whether begin pattern exists, and verify there is only one of each begin and end statement in the menuscript
 function testForMenu() {
 		menu="$1"
@@ -94,14 +143,14 @@ function testForMenu() {
 		grep "#end $menu" $scriptname > /dev/null
 		if [[ $? -ne 0 ]]; then
 				echo "ERROR: Menu $menu is missing #end statement"
-				exit -1
+				return -1
 		fi
 
 		# See if a block exists
 		ret=$(sed -n "/#begin $menu/,/#end $menu/p" $scriptname | wc -l)
 		if [[ $ret -eq 0 ]]; then
 				echo "ERROR: Menu $menu doesn't exist"
-				exit -1
+				return -1
 		fi
 }
 
@@ -133,6 +182,27 @@ function resetVarsToDefault() {
 	back=true
 }
 
+##
+## MAIN PROGRAM
+##
+
+# Test the $1 script is provided
+if [[ "$#" -lt 1 ]]; then
+		echo "ERROR: menumaker requires a menumaker script as it's parameter"
+		exit -1
+fi
+if [ ! -e "$scriptname" ]; then
+		echo "ERROR: The script \"$scriptname\" does not exist"
+		exit -1
+fi
+
+# Load the setup block to initialize the state
+# Don't print errors if we don't need to
+testForMenu "setup" > /dev/null
+if [[ "$?" -eq 0 ]]; then
+	source <(sed -n "/#begin setup/,/#end setup/p" $scriptname)
+fi
+
 while [ "$currentmenu" != "" ]; do
 	ROFIMENU=""
 
@@ -144,16 +214,19 @@ while [ "$currentmenu" != "" ]; do
 		add_nop "---"
 	fi
 
-	# Load current menu
+	# Load current menu - abort the program if we can't find it
 	testForMenu $currentmenu
+	if [[ "$?" -ne 0 ]]; then
+		exit -1
+	fi
 	source <(sed -n "/#begin $currentmenu/,/#end $currentmenu/p" $scriptname)
 
 	# Generate a prompt if one does not exist
 	if [[ "$prompt" == "" ]]; then
-		echo "$name > "
 		prompt="$name > "
 	fi
 
+	# Convert menu items to string to render in rofi
 	num=1
 	for key in "${ITEMID[@]}"; do
 		item="${ITEMNAME[$key]}"
@@ -169,28 +242,35 @@ while [ "$currentmenu" != "" ]; do
 		fi
 	done
 
-	# RUN ROFI!
-	result=$(echo -e "$ROFIMENU" | rofi -dmenu -p "$prompt")
+	# RUN ROFI! (Make sure to strip the trailing newline)
+	result=$(echo -e "$(printf "$ROFIMENU")" | rofi -dmenu -p "$prompt")
+
 	# If nothing was returned, the user quit
 	if [[ "$result" == "" ]]; then
 		break
 	else
 		# Otherwise, remove the number if added
-		if [[ $numbered = true ]]; then
-			sanatized=$(echo $result | sed 's/^[0-9]\+ //g')
+		if [[ $numbered == true ]]; then
+			SELECTION=$(echo $result | sed 's/^[0-9]\+ //g')
 		else
-			sanatized=$result
+			SELECTION=$result
 		fi
 		# Calculate the lookup key
-		key=$(echo "$sanatized" | md5sum | cut -d' ' -f 1)
+		key=$(echo "$SELECTION" | md5sum | cut -d' ' -f 1)
 		# Then lookup our next action
-		if [[ ${ITEMTYPE["$key"]} == "nop" ]]; then
+		if [[ "${ITEMTYPE["$key"]}" == "nop" ]]; then
 			continue
-		elif [[ ${ITEMTYPE["$key"]} == "item" ]]; then
-			prevmenu+=("$currentmenu")
-			prevname+=("$name")
+		elif [[ "${ITEMTYPE["$key"]}" == "item" ]]; then
+			if [[ "$back" == true ]]; then
+				prevmenu+=("$currentmenu")
+				prevname+=("$name")
+			fi
+			# If the item has an action, run it
+			if [[ "${ITEMACTION["$key"]}" != "" ]]; then
+				eval "${ITEMACTION["$key"]}"
+			fi
 			currentmenu=${ITEMLINK["$key"]}
-		elif [[ ${ITEMTYPE["$key"]} == "back" ]]; then
+		elif [[ "${ITEMTYPE["$key"]}" == "back" ]]; then
 			currentmenu=${prevmenu[-1]}
 			unset prevmenu[${#prevmenu[@]}-1]
 			unset prevname[${#prevname[@]}-1]
@@ -199,4 +279,3 @@ while [ "$currentmenu" != "" ]; do
 		fi
 	fi
 done
-
