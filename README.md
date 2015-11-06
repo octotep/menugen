@@ -2,7 +2,7 @@
 
 **CURRENTLY IN DEVELOPMENT, API IS NOT STABLE**
 
-`Menumaker` is a bash script which runs menumaker scripts (specially formatted bash scripts)
+`menumaker` is a bash script which runs menumaker scripts (specially formatted bash scripts)
 and renders them as a series of interactive menus using
 [rofi](https://davedavenport.github.io/rofi/).
 
@@ -13,10 +13,10 @@ which take advantage of rofi's features to make quick and easy-to-use menus
 driven applications.
 Some examples include:
 
-- (rofi-scripts)[https://github.com/carnager/rofi-scripts]
-- (teiler)[https://github.com/carnager/teiler]
-- (rofi-pass)[https://github.com/carnager/rofi-pass]
-- (clerk)[https://github.com/carnager/clerk]
+- [rofi-scripts](https://github.com/carnager/rofi-scripts)
+- [teiler](https://github.com/carnager/teiler)
+- [rofi-pass](https://github.com/carnager/rofi-pass)
+- [clerk](https://github.com/carnager/clerk)
 
 `menumaker`'s entire purpose is to make these types of programs easy to create
 and maintain.
@@ -58,13 +58,13 @@ Save that in a file, maybe `helloworld`, `chmod 700` it, then run with `./hellow
 
 There's a couple of things to notice right off the bat.
 
-#. `menumaker` auto generates "back" menu options, filling in the name of the menu where necessary.
-#. It also auto generates a prompt if a custom one is not provided, as in the main menu.
-#. All the echo statements work exactly like you would expect them to.
-#. Any menu options which are decorations, or nops, will not terminate the application, but will instead, just reload the same menu
-#. Each menu has a begin and end statement
-#. `menumaker` will always start
-#. If you press rofi's quit button (default: ESC) at any time, the menu will terminate
+- `menumaker` auto generates "back" menu options, filling in the name of the menu where necessary.
+- It also auto generates a prompt if a custom one is not provided, as in the main menu.
+- All the echo statements work exactly like you would expect them to.
+- Any menu options which are decorations, or nops, will not terminate the application, but will instead, just reload the same menu
+- Each menu has a begin and end statement
+- `menumaker` will always start at the main menu
+- If you press rofi's quit button (default: ESC) at any time, the menu will terminate
 
 # TODO
 
