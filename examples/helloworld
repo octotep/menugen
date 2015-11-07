@@ -1,0 +1,14 @@
+#!../menumaker
+
+#begin main
+name="Hello World"
+add_item "Here we're adding an item to a menu"            'next' 'echo Running the item'
+add_link 'Just a link, will not run an action'            'next'
+add_exec 'Just runs an action, will terminate afterwards'        'echo Running the exec'
+#end main
+
+#begin next
+name="Final menu"
+prompt="See ya! > "
+add_exec 'All done!' "echo Thanks for playing, come again sometime"
+#end next

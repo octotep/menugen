@@ -14,6 +14,7 @@ driven applications.
 Some examples include:
 
 - [rofi-scripts](https://github.com/carnager/rofi-scripts)
+- [Dave Davenport's RandomScripts](https://github.com/DaveDavenport/RandomScripts)
 - [teiler](https://github.com/carnager/teiler)
 - [rofi-pass](https://github.com/carnager/rofi-pass)
 - [clerk](https://github.com/carnager/clerk)
@@ -24,7 +25,7 @@ and maintain.
 # Getting Started
 
 To start, download menumaker to your computer. Next, follow along with a couple
-of examples:
+of examples which you can find in the repository:
 
 ## Example #1 - Hello World
 
@@ -32,7 +33,7 @@ First I'll show you the code, then I'll explain some basics about working with
 `menumaker`.
 
 ```bash
-#!/path/to/menumaker
+#!../menumaker
 
 #begin main
 name="Hello World"

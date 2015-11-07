@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # Internal values
-declare -ga prevmenu=("")
-declare -ga prevname=("")
-currentmenu="main"
-scriptname="$1"
+declare -ga PREVMENU=("")
+declare -ga PREVNAME=("")
+CURRENTMENU="main"
+HASH=""
+SCRIPTNAME="$1"
 
 # Special vars defined for each menu
 declare -ga ITEMID
@@ -18,12 +19,12 @@ numbered=true
 autoselect=true
 back=true
 
-# Function which adds ITEMs to the menu
+# Function which creates a menu ITEM
 # $1 - ITEM name
 # $2 - Link location
 # $3 - Action to perform on follow
-function add_item() {
-	local hash=$(echo "$1" | md5sum | cut -d' ' -f 1)
+function create_item() {
+	HASH=$(echo "$1" | md5sum | cut -d' ' -f 1)
 	# Check parameters
 	if [[ "$#" -ne 3 ]]; then
 		echo "ERROR: add_item requires 3 arguments (got $#)"
@@ -42,18 +43,36 @@ function add_item() {
 		echo "ERROR: The ITEM must have either a link or an action"
 		exit -1
 	fi
-	ITEMID+=("$hash")
-	ITEMNAME["$hash"]="$1"
-	ITEMTYPE["$hash"]="item"
-	ITEMLINK["$hash"]="$2"
-	ITEMACTION["$hash"]="$3"
+	ITEMNAME["$HASH"]="$1"
+	ITEMTYPE["$HASH"]="item"
+	ITEMLINK["$HASH"]="$2"
+	ITEMACTION["$HASH"]="$3"
 }
 
-# Function which adds links to the menu
+# Function which adds ITEMs to the end of the menu
+# $1 - ITEM name
+# $2 - Link location
+# $3 - Action to perform on follow
+function add_item() {
+	create_item "$1" "$2" "$3"
+	echo "ITEM HASH: $HASH"
+	ITEMID+=("$HASH")
+}
+
+# Function which adds ITEMs to the beginning of the menu
+# $1 - ITEM name
+# $2 - Link location
+# $3 - Action to perform on follow
+function cons_item() {
+	create_item "$1" "$2" "$3"
+	ITEMID=("$HASH" "${ITEMID[@]}")
+}
+
+# Function which creates a menu link
 # $1 - link name
 # $2 - Link location
-function add_link() {
-	local hash=$(echo "$1" | md5sum | cut -d' ' -f 1)
+function create_link() {
+	HASH=$(echo "$1" | md5sum | cut -d' ' -f 1)
 	# Check parameters
 	if [[ "$#" -ne 2 ]]; then
 		echo "ERROR: add_item requires 2 arguments (got $#)"
@@ -68,18 +87,33 @@ function add_link() {
 		echo "    - Provided link: \"$2\""
 		exit -1
 	fi
-	ITEMID+=("$hash")
-	ITEMNAME["$hash"]="$1"
-	ITEMTYPE["$hash"]="item"
-	ITEMLINK["$hash"]="$2"
-	ITEMACTION["$hash"]=""
+	ITEMNAME["$HASH"]="$1"
+	ITEMTYPE["$HASH"]="item"
+	ITEMLINK["$HASH"]="$2"
+	ITEMACTION["$HASH"]=""
 }
 
-# Function which adds actions to the menu
+# Function which adds a link to the end of the menu
+# $1 - link name
+# $2 - Link location
+function add_link() {
+	create_link "$1" "$2"
+	ITEMID+=("$HASH")
+}
+
+# Function which adds links to the beginning of the menu
+# $1 - link name
+# $2 - Link location
+function cons_link() {
+	create_link "$1" "$2"
+	ITEMID=("$HASH" "${ITEMID[@]}")
+}
+
+# Function which creates a menu action
 # $1 - link name
 # $2 - Action to exec
-function add_exec() {
-	local hash=$(echo "$1" | md5sum | cut -d' ' -f 1)
+function create_exec() {
+	HASH=$(echo "$1" | md5sum | cut -d' ' -f 1)
 	# Check parameters
 	if [[ "$#" -ne 2 ]]; then
 		echo "ERROR: add_item requires 2 arguments (got $#)"
@@ -94,43 +128,82 @@ function add_exec() {
 		echo "    - Provided action: \"$2\""
 		exit -1
 	fi
-	ITEMID+=("$hash")
-	ITEMNAME["$hash"]="$1"
-	ITEMTYPE["$hash"]="item"
-	ITEMLINK["$hash"]=""
-	ITEMACTION["$hash"]="$2"
+	ITEMNAME["$HASH"]="$1"
+	ITEMTYPE["$HASH"]="item"
+	ITEMLINK["$HASH"]=""
+	ITEMACTION["$HASH"]="$2"
+}
+
+# Function which adds actions to the end of the menu
+# $1 - link name
+# $2 - Action to exec
+function add_exec() {
+	create_exec "$1" "$2"
+	ITEMID+=("$HASH")
+}
+
+# Function which adds actions to the beginning of the menu
+# $1 - link name
+# $2 - Action to exec
+function cons_exec() {
+	create_exec "$1" "$2"
+	ITEMID=("$HASH" "${ITEMID[@]}")
 }
 
 # Function which adds BACK to the menu using menumaker's internal data structures
-function add_back() {
+function create_back() {
 	local item_text=""
 	# No args provided, auto generate back item
 	if [[ "$#" -eq 0 ]]; then
-		if [[ "${prevmenu[-1]}" == "" ]]; then
+		if [[ "${PREVMENU[-1]}" == "" ]]; then
 			item_text="< Exit"
 		else
-			item_text="< Back to ${prevname[-1]}"
+			item_text="< Back to ${PREVNAME[-1]}"
 		fi
 	fi
-	local hash=$(echo "$item_text" | md5sum | cut -d' ' -f 1)
-	ITEMID+=("$hash")
-	ITEMNAME["$hash"]="$item_text"
-	ITEMTYPE["$hash"]="back"
-	ITEMLINK["$hash"]="${prevmenu[-1]}"
+	HASH=$(echo "$item_text" | md5sum | cut -d' ' -f 1)
+	ITEMNAME["$HASH"]="$item_text"
+	ITEMTYPE["$HASH"]="back"
+	ITEMLINK["$HASH"]="${PREVMENU[-1]}"
+}
+
+# Function which adds back to the end of the menu
+function add_back() {
+	create_back
+	ITEMID+=("$HASH")
+}
+
+# Function which adds BACK to the beginning of the menu
+function cons_back() {
+	create_back
+	ITEMID=("$HASH" "${ITEMID[@]}")
 }
 
 # Function which adds NOPs to the menu
 # $1 - nop text
 # TODO: maybe add the ability to make NOPs run commands
-function add_nop() {
+function create_nop() {
 	if [[ "$#" -ne 1 ]]; then
 		echo "ERROR: add_nop requires the item text"
 		exit -1
 	fi
-	local hash=$(echo "$1" | md5sum | cut -d' ' -f 1)
-	ITEMID+=("$hash")
-	ITEMNAME["$hash"]="$1"
-	ITEMTYPE["$hash"]="nop"
+	HASH=$(echo "$1" | md5sum | cut -d' ' -f 1)
+	ITEMNAME["$HASH"]="$1"
+	ITEMTYPE["$HASH"]="nop"
+}
+
+# Function which adds NOPs to the menu
+# $1 - nop text
+function add_nop() {
+	create_nop "$1"
+	ITEMID+=("$HASH")
+}
+
+# Function which adds NOPs to the menu
+# $1 - nop text
+function cons_nop() {
+	create_nop "$1"
+	ITEMID=("$HASH" "${ITEMID[@]}")
 }
 
 # Fucntion to test if the menu $1 is defined in the menu script
@@ -140,14 +213,14 @@ function testForMenu() {
 		menu="$1"
 
 		# Test to make sure an end pattern exists, sed will just keep on chomping till the EOF otherwise
-		grep "#end $menu" $scriptname > /dev/null
+		grep "#end $menu" $SCRIPTNAME > /dev/null
 		if [[ $? -ne 0 ]]; then
 				echo "ERROR: Menu $menu is missing #end statement"
 				return -1
 		fi
 
 		# See if a block exists
-		ret=$(sed -n "/#begin $menu/,/#end $menu/p" $scriptname | wc -l)
+		ret=$(sed -n "/#begin $menu/,/#end $menu/p" $SCRIPTNAME | wc -l)
 		if [[ $ret -eq 0 ]]; then
 				echo "ERROR: Menu $menu doesn't exist"
 				return -1
@@ -155,7 +228,7 @@ function testForMenu() {
 }
 
 # Function to reset all the values to their defaults to keep the menu system working cleanly
-function resetEverythingToDefault() {
+function resetAllToDefault() {
 	unset ITEMID
 	unset ITEMNAME
 	unset ITEMTYPE
@@ -166,6 +239,7 @@ function resetEverythingToDefault() {
 	declare -gA ITEMTYPE
 	declare -gA ITEMLINK
 	declare -gA ITEMACTION
+	HASH=""
 	name=""
 	prompt=""
 	numbered=true
@@ -175,6 +249,7 @@ function resetEverythingToDefault() {
 
 # Function to reset all the values to their defaults to keep the menu system working cleanly
 function resetVarsToDefault() {
+	HASH=""
 	name=""
 	prompt=""
 	numbered=true
@@ -191,8 +266,8 @@ if [[ "$#" -lt 1 ]]; then
 		echo "ERROR: menumaker requires a menumaker script as it's parameter"
 		exit -1
 fi
-if [ ! -e "$scriptname" ]; then
-		echo "ERROR: The script \"$scriptname\" does not exist"
+if [ ! -e "$SCRIPTNAME" ]; then
+		echo "ERROR: The script \"$SCRIPTNAME\" does not exist"
 		exit -1
 fi
 
@@ -200,26 +275,26 @@ fi
 # Don't print errors if we don't need to
 testForMenu "setup" > /dev/null
 if [[ "$?" -eq 0 ]]; then
-	source <(sed -n "/#begin setup/,/#end setup/p" $scriptname)
+	source <(sed -n "/#begin setup/,/#end setup/p" $SCRIPTNAME)
 fi
 
-while [ "$currentmenu" != "" ]; do
+while [ "$CURRENTMENU" != "" ]; do
 	ROFIMENU=""
 
-	resetEverythingToDefault
-
-	# Add autogenerated back if necessary
-	if [[ $back == true ]]; then
-		add_back
-		add_nop "---"
-	fi
+	resetAllToDefault
 
 	# Load current menu - abort the program if we can't find it
-	testForMenu $currentmenu
+	testForMenu $CURRENTMENU
 	if [[ "$?" -ne 0 ]]; then
 		exit -1
 	fi
-	source <(sed -n "/#begin $currentmenu/,/#end $currentmenu/p" $scriptname)
+	source <(sed -n "/#begin $CURRENTMENU/,/#end $CURRENTMENU/p" $SCRIPTNAME)
+
+	# Add autogenerated back if necessary
+	if [[ "$back" == true ]]; then
+		cons_nop "---"
+		cons_back
+	fi
 
 	# Generate a prompt if one does not exist
 	if [[ "$prompt" == "" ]]; then
@@ -262,18 +337,18 @@ while [ "$currentmenu" != "" ]; do
 			continue
 		elif [[ "${ITEMTYPE["$key"]}" == "item" ]]; then
 			if [[ "$back" == true ]]; then
-				prevmenu+=("$currentmenu")
-				prevname+=("$name")
+				PREVMENU+=("$CURRENTMENU")
+				PREVNAME+=("$name")
 			fi
 			# If the item has an action, run it
 			if [[ "${ITEMACTION["$key"]}" != "" ]]; then
 				eval "${ITEMACTION["$key"]}"
 			fi
-			currentmenu=${ITEMLINK["$key"]}
+			CURRENTMENU=${ITEMLINK["$key"]}
 		elif [[ "${ITEMTYPE["$key"]}" == "back" ]]; then
-			currentmenu=${prevmenu[-1]}
-			unset prevmenu[${#prevmenu[@]}-1]
-			unset prevname[${#prevname[@]}-1]
+			CURRENTMENU=${PREVMENU[-1]}
+			unset PREVMENU[${#PREVMENU[@]}-1]
+			unset PREVNAME[${#PREVNAME[@]}-1]
 		else
 			echo "ERROR: Invalid ITEM type"
 		fi
