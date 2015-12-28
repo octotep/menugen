@@ -3,8 +3,8 @@
 # Internal values
 declare -ga PREVMENU=("")
 declare -ga PREVNAME=("")
-CURRENTMENU="main"
-HASH=""
+CURRENTMENU="main" # Keeps track of the current menu
+HASH="" # MD5 hash of current menu text for searching MENU data structures
 SCRIPTNAME="$1"
 
 # Special vars defined for each menu
@@ -55,7 +55,6 @@ function create_item() {
 # $3 - Action to perform on follow
 function add_item() {
 	create_item "$1" "$2" "$3"
-	echo "ITEM HASH: $HASH"
 	ITEMID+=("$HASH")
 }
 
@@ -245,6 +244,8 @@ function resetAllToDefault() {
 	numbered=true
 	autoselect=true
 	back=true
+	default_link=""
+	default_exec=""
 }
 
 # Function to reset all the values to their defaults to keep the menu system working cleanly
@@ -255,6 +256,8 @@ function resetVarsToDefault() {
 	numbered=true
 	autoselect=true
 	back=true
+	default_link=""
+	default_exec=""
 }
 
 ##
@@ -350,7 +353,17 @@ while [ "$CURRENTMENU" != "" ]; do
 			unset PREVMENU[${#PREVMENU[@]}-1]
 			unset PREVNAME[${#PREVNAME[@]}-1]
 		else
-			echo "ERROR: Invalid ITEM type"
+			if [[ "$SELECTION" != "" ]]; then
+				# Custom command was input
+				# Set up the next menu (if it's not set, i.e. empty, MM will exit)
+				CURRENTMENU="$default_link"
+				# Run the appropriate action
+				if [[ "$default_exec" != "" ]]; then
+					eval "$default_exec"
+				fi
+			else
+				echo "ERROR: Invalid ITEM type"
+			fi
 		fi
 	fi
 done
