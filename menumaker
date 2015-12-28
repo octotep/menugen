@@ -19,6 +19,11 @@ numbered=true
 autoselect=true
 back=true
 
+# A simple wrapper to echo to stderr
+function echoerr() {
+	echo "$@" 1>&2
+}
+
 # Function which creates a menu ITEM
 # $1 - ITEM name
 # $2 - Link location
@@ -27,20 +32,20 @@ function create_item() {
 	HASH=$(echo "$1" | md5sum | cut -d' ' -f 1)
 	# Check parameters
 	if [[ "$#" -ne 3 ]]; then
-		echo "ERROR: add_item requires 3 arguments (got $#)"
-		echo "    - The name of the ITEM (value: \"$1\")"
-		echo "    - The link location to the next menu (value: \"$2\")"
-		echo "    - The action the ITEM will exec (value: \"$3\")"
+		echoerr "ERROR: add_item requires 3 arguments (got $#)"
+		echoerr "    - The name of the ITEM (value: \"$1\")"
+		echoerr "    - The link location to the next menu (value: \"$2\")"
+		echoerr "    - The action the ITEM will exec (value: \"$3\")"
 		exit -1
 	fi
 	# Name CANNOT be blank
 	if [[ "$1" == "" ]]; then
-		echo "ERROR: ITEM name must not be blank!"
+		echoerr "ERROR: ITEM name must not be blank!"
 		exit -1
 	fi
 	# One of link or action MUST NOT be blank
 	if [[ "$1" == "" && "$2" == "" ]]; then
-		echo "ERROR: The ITEM must have either a link or an action"
+		echoerr "ERROR: The ITEM must have either a link or an action"
 		exit -1
 	fi
 	ITEMNAME["$HASH"]="$1"
@@ -74,16 +79,16 @@ function create_link() {
 	HASH=$(echo "$1" | md5sum | cut -d' ' -f 1)
 	# Check parameters
 	if [[ "$#" -ne 2 ]]; then
-		echo "ERROR: add_item requires 2 arguments (got $#)"
-		echo "    - The name of the ITEM (value: \"$1\")"
-		echo "    - The link location to the next menu (value: \"$2\")"
+		echoerr "ERROR: add_item requires 2 arguments (got $#)"
+		echoerr "    - The name of the ITEM (value: \"$1\")"
+		echoerr "    - The link location to the next menu (value: \"$2\")"
 		exit -1
 	fi
 	# Name and the link CANNOT be blank
 	if [[ "$1" == "" || "$2" == "" ]]; then
-		echo "ERROR: Neither the name nor the link can be blank!"
-		echo "    - Provided name: \"$1\""
-		echo "    - Provided link: \"$2\""
+		echoerr "ERROR: Neither the name nor the link can be blank!"
+		echoerr "    - Provided name: \"$1\""
+		echoerr "    - Provided link: \"$2\""
 		exit -1
 	fi
 	ITEMNAME["$HASH"]="$1"
@@ -115,16 +120,16 @@ function create_exec() {
 	HASH=$(echo "$1" | md5sum | cut -d' ' -f 1)
 	# Check parameters
 	if [[ "$#" -ne 2 ]]; then
-		echo "ERROR: add_item requires 2 arguments (got $#)"
-		echo "    - The name of the ITEM (value: \"$1\")"
-		echo "    - The action to exec (value: \"$2\")"
+		echoerr "ERROR: add_item requires 2 arguments (got $#)"
+		echoerr "    - The name of the ITEM (value: \"$1\")"
+		echoerr "    - The action to exec (value: \"$2\")"
 		exit -1
 	fi
 	# Neither the name or the action can be blank
 	if [[ "$1" == "" || "$2" == "" ]]; then
-		echo "ERROR: Neither the name nor the link can be blank!"
-		echo "    - Provided name: \"$1\""
-		echo "    - Provided action: \"$2\""
+		echoerr "ERROR: Neither the name nor the link can be blank!"
+		echoerr "    - Provided name: \"$1\""
+		echoerr "    - Provided action: \"$2\""
 		exit -1
 	fi
 	ITEMNAME["$HASH"]="$1"
@@ -183,7 +188,7 @@ function cons_back() {
 # TODO: maybe add the ability to make NOPs run commands
 function create_nop() {
 	if [[ "$#" -ne 1 ]]; then
-		echo "ERROR: add_nop requires the item text"
+		echoerr "ERROR: add_nop requires the item text"
 		exit -1
 	fi
 	HASH=$(echo "$1" | md5sum | cut -d' ' -f 1)
@@ -214,14 +219,14 @@ function testForMenu() {
 		# Test to make sure an end pattern exists, sed will just keep on chomping till the EOF otherwise
 		grep "#end $menu" $SCRIPTNAME > /dev/null
 		if [[ $? -ne 0 ]]; then
-				echo "ERROR: Menu $menu is missing #end statement"
+				echoerr "ERROR: Menu $menu is missing #end statement"
 				return -1
 		fi
 
 		# See if a block exists
 		ret=$(sed -n "/#begin $menu/,/#end $menu/p" $SCRIPTNAME | wc -l)
 		if [[ $ret -eq 0 ]]; then
-				echo "ERROR: Menu $menu doesn't exist"
+				echoerr "ERROR: Menu $menu doesn't exist"
 				return -1
 		fi
 }
@@ -266,17 +271,17 @@ function resetVarsToDefault() {
 
 # Test the $1 script is provided
 if [[ "$#" -lt 1 ]]; then
-		echo "ERROR: menumaker requires a menumaker script as it's parameter"
+		echoerr "ERROR: menumaker requires a menumaker script as it's parameter"
 		exit -1
 fi
 if [ ! -e "$SCRIPTNAME" ]; then
-		echo "ERROR: The script \"$SCRIPTNAME\" does not exist"
+		echoerr "ERROR: The script \"$SCRIPTNAME\" does not exist"
 		exit -1
 fi
 
 # Load the setup block to initialize the state
 # Don't print errors if we don't need to
-testForMenu "setup" > /dev/null
+testForMenu "setup" 2>/dev/null
 if [[ "$?" -eq 0 ]]; then
 	source <(sed -n "/#begin setup/,/#end setup/p" $SCRIPTNAME)
 fi
@@ -362,7 +367,7 @@ while [ "$CURRENTMENU" != "" ]; do
 					eval "$default_exec"
 				fi
 			else
-				echo "ERROR: Invalid ITEM type"
+				echoerr "ERROR: Invalid ITEM type"
 			fi
 		fi
 	fi
