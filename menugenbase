@@ -345,7 +345,7 @@ while [ "$CURRENTMENU" != "" ]; do
 	else
 		# Otherwise, remove the number if added
 		if [[ $numbered == true ]]; then
-			SELECTION=$(echo $result | sed 's/^[0-9]\+ //g')
+			SELECTION=$(echo $result | sed -r 's/^[0-9]+ //g')
 		else
 			SELECTION=$result
 		fi
