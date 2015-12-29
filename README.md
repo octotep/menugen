@@ -4,7 +4,7 @@
 
 `menugen` is a bash script which runs menugen scripts (specially formatted bash scripts)
 and renders them as a series of interactive menus using
-[rofi](https://davedavenport.github.io/rofi/).
+[rofi](https://davedavenport.github.io/rofi/) or [fzf](https://github.com/junegunn/fzf).
 
 ## Motivation
 
@@ -69,5 +69,6 @@ There's a couple of things to notice right off the bat.
 
 # TODO
 
-- Add examples about dynamic menu creation, managing state, and reading rofi's selection
+- Add examples about dynamic menu creation, managing state, and reading rofi/fzf's selection
+- Explain the difference between the graphical interface, menugen, and the command line interface, menugencli.
 - Check the [issue tracker](https://github.com/octotep/menugen/issues)

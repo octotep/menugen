@@ -1,0 +1,27 @@
+#!../menugencli
+
+#begin main
+name="Main Menu"
+prompt="What to do? > "
+add_link 'Sleep' 'sleep'
+add_link 'Print date and time' 'date'
+#end main
+
+#begin sleep
+name=sleep
+prompt="How long? (s) > "
+numbered=false
+default_exec='sleep $SELECTION'
+
+for i in `seq 1 10`; do
+	add_exec "$i" 'sleep $SELECTION'
+done 
+#end sleep
+
+#begin date
+name=date
+prompt="Pick US timezone > "
+add_exec "Eastern" 'TZ="US/Eastern" date'
+add_exec "Central" 'TZ="US/Central" date'
+add_exec "Pacific" 'TZ="US/Pacific" date'
+#end date
