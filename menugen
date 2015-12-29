@@ -19,4 +19,4 @@ function RENDERMENU() {
 	fi
 }
 
-source menumakerbase
+source menugenbase
