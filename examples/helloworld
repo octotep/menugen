@@ -1,4 +1,4 @@
-#!../menumaker
+#!../menugen
 
 #begin main
 name="Hello World"
