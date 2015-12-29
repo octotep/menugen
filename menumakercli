@@ -13,9 +13,9 @@ function RENDERMENU() {
 		exit -1
 	fi
 	if [[ "$3" == true ]]; then
-		echo -e "$1" | rofi -dmenu -p "$2" -auto-select
+		echo -e "$1" | fzf --reverse --select-1 --prompt="$2"
 	else
-		echo -e "$1" | rofi -dmenu -p "$2"
+		echo -e "$1" | fzf --reverse --prompt="$2"
 	fi
 }
 

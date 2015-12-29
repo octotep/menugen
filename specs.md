@@ -7,7 +7,7 @@ Menu
 - Name: The name of the menu, used for the back function
 - Prompt Name (default: name): An alternative name for the prompt
 - Numbered (default: true): Controls whether the items are numbered or not
-- Auto-select (default: true): Controls whether the menu auto selects an only match
+- Auto-select (default: false): Controls whether the menu auto selects an only match
 
 
 Reserved Menu Names
