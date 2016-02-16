@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This wraps the menumaker logic and renders menus graphically with rofi
 # $1 - Menu content (a string with newlines)
