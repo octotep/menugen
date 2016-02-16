@@ -5,27 +5,27 @@
 # $2 - Prompt text (a string)
 # $3 - Auto-selection option (a boolean)
 function RENDERMENU() {
-    if [[ $# -ne 3 ]]; then
+	if [[ $# -ne 3 ]]; then
 		>&2 echo "ERROR: RENDERMENU requires 3 arguments (got $#)"
 		>&2 echo "    - The menu content (value: \"$1\")"
 		>&2 echo "    - The prompt text (value: \"$2\")"
 		>&2 echo "    - Boolean for autoselect (value: \"$3\")"
 		exit -1
-    fi
-    if [[ "$(uname)" == "Linux" ]]; then
-	if [[ "$3" == true ]]; then
-	    echo -e "$1" | rofi -dmenu -p "$2"
-	else
-	    echo -e "$1" | rofi -dmenu -p "$2"
 	fi
-    fi
-    if [[ "$(uname)" == "Darwin" ]]; then
-	if [[ "$3" == true ]]; then
-	    echo -e "$1" | xmenu -H 20 -p "$2"
-	else
-	    echo -e "$1" | xmenu -H 20 -p "$2"
+	if [[ "$(uname)" == "Linux" ]]; then
+		if [[ "$3" == true ]]; then
+			echo -e "$1" | rofi -dmenu -p "$2"
+		else
+			echo -e "$1" | rofi -dmenu -p "$2"
+		fi
 	fi
-    fi
+	if [[ "$(uname)" == "Darwin" ]]; then
+		if [[ "$3" == true ]]; then
+			echo -e "$1" | xmenu -H 20 -p "$2"
+		else
+			echo -e "$1" | xmenu -H 20 -p "$2"
+		fi
+	fi
 }
 
 source menugenbase

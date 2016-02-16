@@ -1,4 +1,4 @@
-#!../menugen
+#!../menugencli
 
 #begin main
 name="Main Menu"
