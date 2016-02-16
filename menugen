@@ -12,14 +12,14 @@ function RENDERMENU() {
 		>&2 echo "    - Boolean for autoselect (value: \"$3\")"
 		exit -1
     fi
-    if [[ "$(uname)" == "linux-gnu" ]]; then
+    if [[ "$(uname)" == "Linux" ]]; then
 	if [[ "$3" == true ]]; then
 	    echo -e "$1" | rofi -dmenu -p "$2"
 	else
 	    echo -e "$1" | rofi -dmenu -p "$2"
 	fi
     fi
-    if [[ "$(uname)" == "darwin" ]]; then
+    if [[ "$(uname)" == "Darwin" ]]; then
 	if [[ "$3" == true ]]; then
 	    echo -e "$1" | xmenu -H 20 -p "$2"
 	else
